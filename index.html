@@ -3,108 +3,272 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asteroid Avoidance</title>
+  <title>Pixel Asteroid Avoidance</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
     body {
-      margin: 0;
+      background: radial-gradient(circle at center, #0d0d2b, #000);
+      color: #ffffff;
+      font-family: 'Press Start 2P', cursive;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    #game-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, #0d0d2b, #000);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      overflow: hidden;
+      position: relative;
+      background-color: #1a1a2e;
+      border-radius: 8px;
+      box-shadow: 0 0 15px #00f0ff, 0 0 40px #00f0ff;
+      padding: 20px;
     }
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      color: #ff4aff;
-      text-shadow: 0 0 10px #ff4aff, 0 0 20px #ff4aff;
-    }
-
-    canvas {
-      border: 3px solid #00f0ff;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #00f0ff, 0 0 30px #00f0ff;
+    #gameCanvas {
+      border: 4px solid #ffffff;
       background: black;
+      image-rendering: pixelated;
+      box-shadow: 0 0 20px #ff4aff, 0 0 50px #ff4aff;
     }
 
-    .btn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 6px;
-      background: #ff4aff;
-      color: white;
+    #ui-container {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 0 10px;
+    }
+
+    #score-display, #lives-display {
+      font-size: 1em;
+      text-shadow: 2px 2px #000;
+    }
+
+    #fullscreen-btn {
+      font-size: 0.7em;
+      padding: 6px 12px;
+      background: #333;
+      border: 2px solid #fff;
+      border-radius: 4px;
       cursor: pointer;
-      box-shadow: 0 0 10px #ff4aff, 0 0 20px #ff4aff;
-      transition: 0.2s;
+      color: white;
+      font-family: 'Press Start 2P', cursive;
     }
 
-    .btn:hover {
-      background: #ff80ff;
-      transform: scale(1.05);
-    }
-
-    .info {
-      margin-top: 10px;
-      opacity: 0.8;
+    .overlay-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       text-align: center;
+      border-radius: 8px;
+      transition: opacity 0.5s ease;
+    }
+
+    #start-screen { opacity: 1; visibility: visible; }
+    #game-over-screen { opacity: 0; visibility: hidden; }
+
+    .overlay-screen h1 {
+      font-size: 2em;
+      color: #ff6b6b;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px #000;
+    }
+
+    #final-score {
+      font-size: 1.5em;
+      color: #ffffff;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px #000;
+    }
+
+    .action-button {
+      padding: 12px 24px;
+      font-size: 0.8em;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #4b4b6c;
+      border: 2px solid #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+      box-shadow: 4px 4px #2a2a3e;
+    }
+
+    .action-button:hover {
+      background-color: #5c5c8a;
+      box-shadow: 2px 2px #2a2a3e;
+      transform: translate(2px, 2px);
     }
   </style>
 </head>
 <body>
-  <h1>🚀 Asteroid Avoidance 🚀</h1>
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
-  <button class="btn" onclick="startGame()">Start Game</button>
-  <p class="info">Use arrow keys to dodge the asteroids!</p>
 
-  <!-- KEEPING YOUR ORIGINAL SCRIPT -->
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+<div id="game-container">
+  <div id="ui-container">
+    <div id="score-display">Score: 0</div>
+    <div id="lives-display">Lives: 3</div>
+    <button id="fullscreen-btn">Fullscreen</button>
+  </div>
 
-    let player = { x: 200, y: 550, width: 30, height: 30, speed: 5 };
-    let asteroids = [];
-    let score = 0;
-    let gameInterval;
-    let keys = {};
+  <canvas id="gameCanvas"></canvas>
 
-    document.addEventListener("keydown", e => keys[e.key] = true);
-    document.addEventListener("keyup", e => keys[e.key] = false);
+  <div id="start-screen" class="overlay-screen">
+    <h1>Avoid the Asteroids!</h1>
+    <p style="font-size: 1em;">Use the **Left** and **Right** arrow keys to move.</p>
+    <button class="action-button" id="startButton">Click to Play</button>
+  </div>
 
-    function startGame() {
-      player.x = 200;
-      asteroids = [];
-      score = 0;
-      clearInterval(gameInterval);
-      gameInterval = setInterval(updateGame, 20);
+  <div id="game-over-screen" class="overlay-screen">
+    <h1>Game Over</h1>
+    <div id="final-score">Final Score: 0</div>
+    <button class="action-button" id="restartButton">Restart Game</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('score-display');
+  const livesDisplay = document.getElementById('lives-display');
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const finalScoreDisplay = document.getElementById('final-score');
+  const startButton = document.getElementById('startButton');
+  const restartButton = document.getElementById('restartButton');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+  let gameState = 'ready';
+  let score = 0;
+  let lives = 3;
+  let player, asteroids;
+  let keys = {};
+  const playerSpeed = 5;
+  let scaleFactor = 1;
+
+  const rocketImg = new Image();
+  rocketImg.src = "https://i.ibb.co/2nRk5S2/rocket.png"; // pixel rocket sprite
+  const asteroidImg = new Image();
+  asteroidImg.src = "https://i.ibb.co/4SdchQh/asteroid.png"; // pixel asteroid sprite
+
+  const setCanvasSize = () => {
+    canvas.width = Math.min(window.innerWidth - 40, 900);
+    canvas.height = Math.min(window.innerHeight - 150, 600);
+    scaleFactor = canvas.width / 600;
+  };
+  setCanvasSize();
+  window.addEventListener('resize', setCanvasSize);
+
+  class Player {
+    constructor() {
+      this.x = canvas.width / 2;
+      this.y = canvas.height - 60;
+      this.radius = 20 * scaleFactor;
     }
+    draw() {
+      ctx.drawImage(rocketImg, this.x - 20, this.y - 40, 40, 40);
+    }
+    update() {
+      if (keys['ArrowLeft'] || keys['a']) this.x -= playerSpeed*scaleFactor;
+      if (keys['ArrowRight'] || keys['d']) this.x += playerSpeed*scaleFactor;
+      if (this.x - this.radius < 0) this.x = this.radius;
+      if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+    }
+  }
 
-    function updateGame() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  class Asteroid {
+    constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = -40;
+      this.radius = 20 * scaleFactor;
+      this.speedY = 2 + Math.random() * 3;
+    }
+    draw() {
+      ctx.drawImage(asteroidImg, this.x - 20, this.y - 20, 40, 40);
+    }
+    update() { this.y += this.speedY; }
+  }
 
-      if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
-      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+  function init() {
+    gameState = 'playing';
+    score = 0;
+    lives = 3;
+    player = new Player();
+    asteroids = [];
+    startScreen.style.opacity = '0';
+    startScreen.style.visibility = 'hidden';
+    gameOverScreen.style.opacity = '0';
+    gameOverScreen.style.visibility = 'hidden';
+    scoreDisplay.textContent = 'Score: 0';
+    livesDisplay.textContent = `Lives: ${lives}`;
+    requestAnimationFrame(gameLoop);
+  }
 
-      // draw rocket
-      ctx.fillStyle = "#0ff";
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+  function gameLoop() {
+    if (gameState !== 'playing') return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // spawn asteroids
-      if (Math.random() < 0.05) {
-        asteroids.push({ x: Math.random() * (canvas.width - 20), y: 0, size: 20 });
+    player.update();
+    player.draw();
+
+    if (Math.random() < 0.02) asteroids.push(new Asteroid());
+
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+      let asteroid = asteroids[i];
+      asteroid.update(); asteroid.draw();
+      const dx = player.x - asteroid.x;
+      const dy = player.y - asteroid.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < player.radius + asteroid.radius) {
+        lives--;
+        livesDisplay.textContent = `Lives: ${lives}`;
+        asteroids.splice(i, 1);
+        if (lives <= 0) { endGame(); return; }
       }
+      if (asteroid.y - asteroid.radius > canvas.height) {
+        asteroids.splice(i, 1);
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+      }
+    }
+    requestAnimationFrame(gameLoop);
+  }
 
-      ctx.fillStyle = "#f00";
-      for (let i = 0; i < asteroids.length; i++) {
-        let a = asteroids[i];
-        a.y += 3;
-        ctx.fillRect(a.x, a.y, a.size, a.size);
+  function endGame() {
+    gameState = 'gameover';
+    finalScoreDisplay.textContent = `Final Score: ${score}`;
+    gameOverScreen.style.opacity = '1';
+    gameOverScreen.style.visibility = 'visible';
+  }
 
-        // collision
-        if (a.y + a.size > player
+  window.addEventListener('keydown', e => keys[e.key] = true);
+  window.addEventListener('keyup', e => keys[e.key] = false);
+  startButton.addEventListener('click', init);
+  restartButton.addEventListener('click', init);
+
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+});
+</script>
+</body>
+</html>
