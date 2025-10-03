@@ -2,273 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pixel Asteroid Avoidance</title>
+  <title>Asteroid Avoidence 🚀</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
     body {
-      background: radial-gradient(circle at center, #0d0d2b, #000);
-      color: #ffffff;
-      font-family: 'Press Start 2P', cursive;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #000010, #001030);
+      color: white;
       overflow: hidden;
-      flex-direction: column;
-    }
-
-    #game-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      background-color: #1a1a2e;
-      border-radius: 8px;
-      box-shadow: 0 0 15px #00f0ff, 0 0 40px #00f0ff;
-      padding: 20px;
     }
 
     #gameCanvas {
-      border: 4px solid #ffffff;
-      background: black;
-      image-rendering: pixelated;
-      box-shadow: 0 0 20px #ff4aff, 0 0 50px #ff4aff;
+      background: url("https://i.ibb.co/7t2ZVhP/stars-bg.png") repeat;
+      display: block;
+      margin: 20px auto;
+      border: 3px solid #0ff;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #0ff;
     }
 
-    #ui-container {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      padding: 0 10px;
-    }
-
-    #score-display, #lives-display {
-      font-size: 1em;
-      text-shadow: 2px 2px #000;
-    }
-
-    #fullscreen-btn {
-      font-size: 0.7em;
-      padding: 6px 12px;
-      background: #333;
-      border: 2px solid #fff;
-      border-radius: 4px;
-      cursor: pointer;
-      color: white;
-      font-family: 'Press Start 2P', cursive;
-    }
-
-    .overlay-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.85);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+    #score {
       text-align: center;
+      font-size: 24px;
+      margin: 10px;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    #startBtn {
+      display: block;
+      margin: 15px auto;
+      padding: 12px 25px;
+      background: linear-gradient(45deg, #ff0044, #ff8800);
+      color: white;
+      border: none;
       border-radius: 8px;
-      transition: opacity 0.5s ease;
-    }
-
-    #start-screen { opacity: 1; visibility: visible; }
-    #game-over-screen { opacity: 0; visibility: hidden; }
-
-    .overlay-screen h1 {
-      font-size: 2em;
-      color: #ff6b6b;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px #000;
-    }
-
-    #final-score {
-      font-size: 1.5em;
-      color: #ffffff;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px #000;
-    }
-
-    .action-button {
-      padding: 12px 24px;
-      font-size: 0.8em;
-      font-weight: bold;
-      color: #ffffff;
-      background-color: #4b4b6c;
-      border: 2px solid #fff;
-      border-radius: 4px;
+      font-size: 18px;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.1s ease;
-      box-shadow: 4px 4px #2a2a3e;
+      transition: 0.2s;
+      box-shadow: 0 0 10px #ff5500;
     }
 
-    .action-button:hover {
-      background-color: #5c5c8a;
-      box-shadow: 2px 2px #2a2a3e;
-      transform: translate(2px, 2px);
+    #startBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #ffaa00;
     }
   </style>
 </head>
 <body>
+  <h1 style="text-align:center; text-shadow:0 0 15px #f0f;">🚀 Asteroid Dodge ☄️</h1>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div id="score">Score: 0</div>
+  <button id="startBtn">Start Game</button>
 
-<div id="game-container">
-  <div id="ui-container">
-    <div id="score-display">Score: 0</div>
-    <div id="lives-display">Lives: 3</div>
-    <button id="fullscreen-btn">Fullscreen</button>
-  </div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const startBtn = document.getElementById("startBtn");
 
-  <canvas id="gameCanvas"></canvas>
+    let rocket, asteroids, score, gameInterval, asteroidInterval;
 
-  <div id="start-screen" class="overlay-screen">
-    <h1>Avoid the Asteroids!</h1>
-    <p style="font-size: 1em;">Use the **Left** and **Right** arrow keys to move.</p>
-    <button class="action-button" id="startButton">Click to Play</button>
-  </div>
+    function drawRocket(x, y) {
+      ctx.beginPath();
+      ctx.moveTo(x, y); 
+      ctx.lineTo(x - 15, y + 40); 
+      ctx.lineTo(x + 15, y + 40); 
+      ctx.closePath();
+      ctx.fillStyle = "red";
+      ctx.fill();
 
-  <div id="game-over-screen" class="overlay-screen">
-    <h1>Game Over</h1>
-    <div id="final-score">Final Score: 0</div>
-    <button class="action-button" id="restartButton">Restart Game</button>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const scoreDisplay = document.getElementById('score-display');
-  const livesDisplay = document.getElementById('lives-display');
-  const startScreen = document.getElementById('start-screen');
-  const gameOverScreen = document.getElementById('game-over-screen');
-  const finalScoreDisplay = document.getElementById('final-score');
-  const startButton = document.getElementById('startButton');
-  const restartButton = document.getElementById('restartButton');
-  const fullscreenBtn = document.getElementById('fullscreen-btn');
-
-  let gameState = 'ready';
-  let score = 0;
-  let lives = 3;
-  let player, asteroids;
-  let keys = {};
-  const playerSpeed = 5;
-  let scaleFactor = 1;
-
-  const rocketImg = new Image();
-  rocketImg.src = "https://i.ibb.co/2nRk5S2/rocket.png"; // pixel rocket sprite
-  const asteroidImg = new Image();
-  asteroidImg.src = "https://i.ibb.co/4SdchQh/asteroid.png"; // pixel asteroid sprite
-
-  const setCanvasSize = () => {
-    canvas.width = Math.min(window.innerWidth - 40, 900);
-    canvas.height = Math.min(window.innerHeight - 150, 600);
-    scaleFactor = canvas.width / 600;
-  };
-  setCanvasSize();
-  window.addEventListener('resize', setCanvasSize);
-
-  class Player {
-    constructor() {
-      this.x = canvas.width / 2;
-      this.y = canvas.height - 60;
-      this.radius = 20 * scaleFactor;
+      // flame
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + 40);
+      ctx.lineTo(x, y + 60);
+      ctx.lineTo(x + 10, y + 40);
+      ctx.fillStyle = "orange";
+      ctx.fill();
     }
-    draw() {
-      ctx.drawImage(rocketImg, this.x - 20, this.y - 40, 40, 40);
+
+    function drawAsteroid(x, y, r) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#888";
+      ctx.fill();
+      ctx.strokeStyle = "#444";
+      ctx.stroke();
     }
-    update() {
-      if (keys['ArrowLeft'] || keys['a']) this.x -= playerSpeed*scaleFactor;
-      if (keys['ArrowRight'] || keys['d']) this.x += playerSpeed*scaleFactor;
-      if (this.x - this.radius < 0) this.x = this.radius;
-      if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+
+    function startGame() {
+      rocket = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 40 };
+      asteroids = [];
+      score = 0;
+
+      if (gameInterval) clearInterval(gameInterval);
+      if (asteroidInterval) clearInterval(asteroidInterval);
+
+      gameInterval = setInterval(updateGame, 20);
+      asteroidInterval = setInterval(spawnAsteroid, 1500);
     }
-  }
 
-  class Asteroid {
-    constructor() {
-      this.x = Math.random() * canvas.width;
-      this.y = -40;
-      this.radius = 20 * scaleFactor;
-      this.speedY = 2 + Math.random() * 3;
+    function spawnAsteroid() {
+      let size = 20 + Math.random() * 20;
+      asteroids.push({ x: Math.random() * (canvas.width - size), y: -size, radius: size });
     }
-    draw() {
-      ctx.drawImage(asteroidImg, this.x - 20, this.y - 20, 40, 40);
-    }
-    update() { this.y += this.speedY; }
-  }
 
-  function init() {
-    gameState = 'playing';
-    score = 0;
-    lives = 3;
-    player = new Player();
-    asteroids = [];
-    startScreen.style.opacity = '0';
-    startScreen.style.visibility = 'hidden';
-    gameOverScreen.style.opacity = '0';
-    gameOverScreen.style.visibility = 'hidden';
-    scoreDisplay.textContent = 'Score: 0';
-    livesDisplay.textContent = `Lives: ${lives}`;
-    requestAnimationFrame(gameLoop);
-  }
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  function gameLoop() {
-    if (gameState !== 'playing') return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Rocket
+      drawRocket(rocket.x, rocket.y);
 
-    player.update();
-    player.draw();
+      // Asteroids
+      for (let i = 0; i < asteroids.length; i++) {
+        let a = asteroids[i];
+        a.y += 4;
+        drawAsteroid(a.x, a.y, a.radius);
 
-    if (Math.random() < 0.02) asteroids.push(new Asteroid());
-
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-      let asteroid = asteroids[i];
-      asteroid.update(); asteroid.draw();
-      const dx = player.x - asteroid.x;
-      const dy = player.y - asteroid.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance < player.radius + asteroid.radius) {
-        lives--;
-        livesDisplay.textContent = `Lives: ${lives}`;
-        asteroids.splice(i, 1);
-        if (lives <= 0) { endGame(); return; }
+        // collision
+        if (
+          a.y + a.radius > rocket.y &&
+          a.x > rocket.x - 20 &&
+          a.x < rocket.x + 20
+        ) {
+          clearInterval(gameInterval);
+          clearInterval(asteroidInterval);
+          alert("💥 Game Over! Final Score: " + score);
+          return;
+        }
       }
-      if (asteroid.y - asteroid.radius > canvas.height) {
-        asteroids.splice(i, 1);
-        score++;
-        scoreDisplay.textContent = `Score: ${score}`;
-      }
+
+      // remove offscreen
+      asteroids = asteroids.filter(a => a.y < canvas.height);
+
+      score++;
+      scoreElement.textContent = "Score: " + score;
     }
-    requestAnimationFrame(gameLoop);
-  }
 
-  function endGame() {
-    gameState = 'gameover';
-    finalScoreDisplay.textContent = `Final Score: ${score}`;
-    gameOverScreen.style.opacity = '1';
-    gameOverScreen.style.visibility = 'visible';
-  }
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft" && rocket.x > 20) rocket.x -= 20;
+      if (e.key === "ArrowRight" && rocket.x < canvas.width - 20) rocket.x += 20;
+    });
 
-  window.addEventListener('keydown', e => keys[e.key] = true);
-  window.addEventListener('keyup', e => keys[e.key] = false);
-  startButton.addEventListener('click', init);
-  restartButton.addEventListener('click', init);
-
-  fullscreenBtn.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  });
-});
-</script>
+    startBtn.addEventListener("click", startGame);
+  </script>
 </body>
 </html>
