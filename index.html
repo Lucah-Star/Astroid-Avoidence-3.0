@@ -1,238 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Asteroid Avoidance</title>
-<style>
-  body {
-    margin: 0;
-    height: 100vh;
-    background-color: #0a0a1a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    color: #fff;
-    font-family: 'Press Start 2P', monospace;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Asteroid Avoidance</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-  h1 {
-    margin-top: 20px;
-    font-size: 20px;
-    color: #00ffff;
-    text-shadow: 0 0 10px #00ffff, 0 0 30px #00aaff;
-    text-align: center;
-  }
+    body {
+      background-color: #0d0d1e;
+      color: #ffffff;
+      font-family: 'Press Start 2P', cursive;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
 
-  #gameContainer {
-    position: relative;
-    margin-top: 20px;
-    border: 3px solid #00ffff;
-    border-radius: 15px;
-    box-shadow: 0 0 40px #00ffff;
-    overflow: hidden;
-  }
+    #game-container {
+      position: relative;
+      background-color: #1a1a2e;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+      padding: 10px;
+    }
 
-  #gameCanvas {
-    display: block;
-    background-color: black;
-  }
+    #gameCanvas {
+      border: 3px solid #ffffff;
+      background-color: #0d0d1e;
+      image-rendering: pixelated;
+      display: block;
+    }
 
-  #ui {
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
+    #ui-container {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.9em;
+    }
 
-  #score {
-    color: #0ff;
-    font-size: 14px;
-    text-shadow: 0 0 8px #0ff;
-  }
+    .overlay-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border-radius: 8px;
+      transition: opacity 0.5s ease;
+    }
 
-  button {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
-    padding: 8px 12px;
-    color: white;
-    background: linear-gradient(90deg, #ff007f, #ff9900);
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 0 15px #ff007f;
-    cursor: pointer;
-    transition: 0.2s;
-  }
+    #start-screen {
+      opacity: 1;
+      visibility: visible;
+    }
 
-  button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 25px #ff9900;
-  }
+    #game-over-screen {
+      opacity: 0;
+      visibility: hidden;
+    }
 
-  #gameOver {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #ff4b4b;
-    font-size: 18px;
-    text-align: center;
-    display: none;
-    text-shadow: 0 0 20px #ff0000;
-  }
+    h1 {
+      font-size: 1.5em;
+      color: #ff6b6b;
+      text-shadow: 2px 2px #000;
+    }
 
-  #finalScore {
-    color: white;
-    font-size: 12px;
-    margin-top: 8px;
-  }
-</style>
+    .action-button {
+      padding: 10px 20px;
+      font-size: 0.7em;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #4b4b6c;
+      border: 2px solid #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 3px 3px #2a2a3e;
+      margin-top: 10px;
+    }
+
+    .action-button:hover {
+      background-color: #5c5c8a;
+      transform: translate(2px, 2px);
+    }
+
+    #fullscreen-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.6em;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    #fullscreen-btn:hover {
+      background-color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h1>🚀 Asteroid Avoidance 🚀</h1>
-  <div id="gameContainer">
-    <canvas id="gameCanvas" width="400" height="500"></canvas>
-    <div id="gameOver">
-      <div>GAME OVER</div>
-      <div id="finalScore"></div>
-      <button id="restartBtn">Restart</button>
-    </div>
-  </div>
-  <div id="ui">
-    <div id="score">Score: 0</div>
-    <button id="fullscreenBtn">Fullscreen</button>
-  </div>
-
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const scoreEl = document.getElementById("score");
-const gameOverScreen = document.getElementById("gameOver");
-const finalScoreEl = document.getElementById("finalScore");
-const restartBtn = document.getElementById("restartBtn");
-
-let rocket = { x: 185, y: 450, width: 30, height: 40 };
-let asteroids = [];
-let score = 0;
-let gameRunning = false;
-let interval;
-
-// draw rocket
-function drawRocket() {
-  ctx.save();
-  ctx.translate(rocket.x + rocket.width / 2, rocket.y + rocket.height / 2);
-  ctx.beginPath();
-  ctx.moveTo(0, -20);
-  ctx.lineTo(12, 20);
-  ctx.lineTo(-12, 20);
-  ctx.closePath();
-  ctx.fillStyle = "#00aaff";
-  ctx.shadowColor = "#00ffff";
-  ctx.shadowBlur = 10;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(-6, 20);
-  ctx.lineTo(0, 35);
-  ctx.lineTo(6, 20);
-  ctx.closePath();
-  ctx.fillStyle = "orange";
-  ctx.shadowColor = "red";
-  ctx.shadowBlur = 15;
-  ctx.fill();
-  ctx.restore();
-}
-
-// draw asteroid
-function drawAsteroid(a) {
-  ctx.beginPath();
-  ctx.arc(a.x, a.y, a.size, 0, Math.PI * 2);
-  ctx.fillStyle = "#666";
-  ctx.shadowColor = "#999";
-  ctx.shadowBlur = 10;
-  ctx.fill();
-}
-
-// new asteroid
-function newAsteroid() {
-  return {
-    x: Math.random() * (canvas.width - 20) + 10,
-    y: -20,
-    size: Math.random() * 20 + 10,
-    speed: Math.random() * 2 + 1
-  };
-}
-
-function update() {
-  if (!gameRunning) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // background stars
-  for (let i = 0; i < 50; i++) {
-    ctx.fillStyle = "rgba(255,255,255," + Math.random() * 0.4 + ")";
-    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1, 1);
-  }
-
-  drawRocket();
-
-  asteroids.forEach((a, i) => {
-    a.y += a.speed;
-    drawAsteroid(a);
-
-    if (a.y > canvas.height) {
-      asteroids.splice(i, 1);
-      score++;
-    }
-
-    if (
-      a.x > rocket.x &&
-      a.x < rocket.x + rocket.width &&
-      a.y > rocket.y &&
-      a.y < rocket.y + rocket.height
-    ) {
-      endGame();
-    }
-  });
-
-  if (Math.random() < 0.03) asteroids.push(newAsteroid());
-  scoreEl.textContent = "Score: " + score;
-}
-
-function startGame() {
-  score = 0;
-  rocket.x = 185;
-  rocket.y = 450;
-  asteroids = [];
-  gameOverScreen.style.display = "none";
-  gameRunning = true;
-  clearInterval(interval);
-  interval = setInterval(update, 20);
-}
-
-function endGame() {
-  gameRunning = false;
-  clearInterval(interval);
-  finalScoreEl.textContent = "Final Score: " + score;
-  gameOverScreen.style.display = "block";
-}
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" && rocket.x > 0) rocket.x -= 25;
-  if (e.key === "ArrowRight" && rocket.x < canvas.width - rocket.width) rocket.x += 25;
-});
-
-restartBtn.addEventListener("click", startGame);
-
-document.getElementById("fullscreenBtn").addEventListener("click", () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-});
-
-startGame();
-</script>
-</body>
-</html>
+  <div id="game-container">
+    <button id="fullscreen-btn">⛶</button>
+    <div id="ui-container">
+      <div id="score-display">Score: 0</div>
+      <
