@@ -3,91 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Big Screen Game</title>
+<title>Pixel Asteroid Avoidance</title>
 <style>
-  body {
-    margin: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-    flex-direction: column;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-  canvas {
-    border: 3px solid white;
-    background: #111;
-  }
+body {
+  background-color: #0d0d1e;
+  color: #ffffff;
+  font-family: 'Press Start 2P', cursive;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
 
-  #fullscreenBtn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #444;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 6px;
-  }
+#game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  background-color: #1a1a2e;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  padding: 20px;
+}
 
-  #fullscreenBtn:hover {
-    background: #666;
-  }
+#fullscreen-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7em;
+  background-color: #4b4b6c;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 2px 2px #000;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+#fullscreen-btn:hover {
+  background-color: #5c5c8a;
+  transform: scale(1.05);
+}
+
+#gameCanvas {
+  border: 4px solid #ffffff;
+  background-color: #0d0d1e;
+  image-rendering: pixelated;
+}
+
+#ui-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 10px;
+}
+
+#score-display, #lives-display {
+  font-size: 1em;
+  text-shadow: 2px 2px #000;
+}
+
+.overlay-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 8px;
+  transition: opacity 0.5s ease;
+}
+
+#start-screen { opacity: 1; visibility: visible; }
+#game-over-screen { opacity: 0; visibility: hidden; }
+
+.overlay-screen h1 {
+  font-size: 2em;
+  color: #ff6b6b;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px #000;
+}
+
+#final-score {
+  font-size: 1.5em;
+  color: #ffffff;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px #000;
+}
+
+.action-button {
+  padding: 12px 24px;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #4b4b6c;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 4px 4px #2a2a3e;
+}
+
+.action-button:hover {
+  background-color: #5c5c8a;
+  box-shadow: 2px 2px #2a2a3e;
+  transform: translate(2px, 2px);
+}
+
+.action-button:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px #2a2a3e;
+}
 </style>
 </head>
 <body>
-
-<button id="fullscreenBtn">Fullscreen</button>
-<canvas id="gameCanvas" width="900" height="600"></canvas>
+  <div id="game-container">
+    <button id="fullscreen-btn">⛶ Fullscreen</button>
+    <div id="ui-container">
+      <div id="score-display">Score: 0</div>
+      <div id="lives-display">Lives: 3</div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="start-screen" class="overlay-screen">
+      <h1>Asteroid Avoidance</h1>
+      <p style="font-size: 1em;">Use the **Left** and **Right** arrow keys to move.</p>
+      <button class="action-button" id="startButton">Click to Play</button>
+    </div>
+    <div id="game-over-screen" class="overlay-screen">
+      <h1>Game Over</h1>
+      <div id="final-score">Final Score: 0</div>
+      <button class="action-button" id="restartButton">Restart Game</button>
+    </div>
+  </div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('score-display');
+  const livesDisplay = document.getElementById('lives-display');
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const finalScoreDisplay = document.getElementById('final-score');
+  const startButton = document.getElementById('startButton');
+  const restartButton = document.getElementById('restartButton');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
 
-let player = { x: 100, y: 100, size: 30, color: "lime", speed: 5 };
-let keys = {};
+  let gameState = 'ready';
+  let score = 0;
+  let lives = 3;
+  let player, asteroids;
+  let keys = {};
 
-document.addEventListener("keydown", (e) => keys[e.key] = true);
-document.addEventListener("keyup", (e) => keys[e.key] = false);
+  const playerColor = '#4A90E2';
+  const asteroidColor = '#888888';
+  const playerSpeed = 5;
+  const largeAsteroidRadiusThreshold = 10;
 
-function update() {
-  if (keys["ArrowUp"]) player.y -= player.speed;
-  if (keys["ArrowDown"]) player.y += player.speed;
-  if (keys["ArrowLeft"]) player.x -= player.speed;
-  if (keys["ArrowRight"]) player.x += player.speed;
+  const setCanvasSize = () => {
+    canvas.width = Math.min(window.innerWidth - 60, 1200);
+    canvas.height = Math.min(window.innerHeight - 140, 800);
+  };
+  setCanvasSi
 
-  player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-  player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.size, player.size);
-}
-
-function gameLoop() {
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-
-document.getElementById("fullscreenBtn").addEventListener("click", () => {
-  if (!document.fullscreenElement) {
-    canvas.requestFullscreen().catch(err => {
-      alert(`Error attempting to enable fullscreen: ${err.message}`);
-    });
-  } else {
-    document.exitFullscreen();
-  }
-});
-</script>
-
-</body>
-</html>
+                          
