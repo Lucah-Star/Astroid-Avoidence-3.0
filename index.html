@@ -3,72 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚀 Asteroid Avoidence 🚀</title>
+<title>Asteroid Avoidance</title>
 <style>
   body {
     margin: 0;
     height: 100vh;
-    background: radial-gradient(circle at center, #030014 0%, #000010 100%);
+    background-color: #0a0a1a;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    color: white;
-    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
   }
 
   h1 {
-    margin-top: 30px;
-    font-size: 2.5rem;
-    letter-spacing: 2px;
-    color: #fff;
-    text-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffff;
+    margin-top: 20px;
+    font-size: 20px;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 30px #00aaff;
+    text-align: center;
+  }
+
+  #gameContainer {
+    position: relative;
+    margin-top: 20px;
+    border: 3px solid #00ffff;
+    border-radius: 15px;
+    box-shadow: 0 0 40px #00ffff;
+    overflow: hidden;
   }
 
   #gameCanvas {
-    border-radius: 20px;
-    box-shadow: 0 0 40px #00ffff, inset 0 0 20px #001;
-    border: 3px solid #00ffff;
-    background: linear-gradient(180deg, #000020, #000010);
     display: block;
-    margin-top: 20px;
+    background-color: black;
+  }
+
+  #ui {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 
   #score {
-    font-size: 22px;
-    margin-top: 15px;
     color: #0ff;
-    text-shadow: 0 0 10px #00ffff;
+    font-size: 14px;
+    text-shadow: 0 0 8px #0ff;
   }
 
-  #startBtn {
-    margin-top: 15px;
-    font-size: 20px;
-    background: linear-gradient(90deg, #ff0040, #ff9900);
-    color: #fff;
+  button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 8px 12px;
+    color: white;
+    background: linear-gradient(90deg, #ff007f, #ff9900);
     border: none;
-    padding: 10px 30px;
-    border-radius: 12px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px #ff007f;
     cursor: pointer;
-    box-shadow: 0 0 20px #ff0040, 0 0 40px #ff9900;
     transition: 0.2s;
   }
 
-  #startBtn:hover {
+  button:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 30px #ff9900, 0 0 60px #ff0040;
+    box-shadow: 0 0 25px #ff9900;
+  }
+
+  #gameOver {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff4b4b;
+    font-size: 18px;
+    text-align: center;
+    display: none;
+    text-shadow: 0 0 20px #ff0000;
+  }
+
+  #finalScore {
+    color: white;
+    font-size: 12px;
+    margin-top: 8px;
   }
 </style>
 </head>
 <body>
-  <h1>🚀 Asteroid Dodge 🚀</h1>
-  <canvas id="gameCanvas" width="400" height="500"></canvas>
-  <div id="score">Score: 0</div>
-  <button id="startBtn">Start Game</button>
+  <h1>🚀 Asteroid Avoidance 🚀</h1>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <div id="gameOver">
+      <div>GAME OVER</div>
+      <div id="finalScore"></div>
+      <button id="restartBtn">Restart</button>
+    </div>
+  </div>
+  <div id="ui">
+    <div id="score">Score: 0</div>
+    <button id="fullscreenBtn">Fullscreen</button>
+  </div>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScoreEl = document.getElementById("finalScore");
+const restartBtn = document.getElementById("restartBtn");
 
 let rocket = { x: 185, y: 450, width: 30, height: 40 };
 let asteroids = [];
@@ -76,14 +118,7 @@ let score = 0;
 let gameRunning = false;
 let interval;
 
-// Draw glowing background stars
-function drawStars() {
-  for (let i = 0; i < 100; i++) {
-    ctx.fillStyle = "rgba(255, 255, 255," + Math.random() * 0.5 + ")";
-    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
-  }
-}
-
+// draw rocket
 function drawRocket() {
   ctx.save();
   ctx.translate(rocket.x + rocket.width / 2, rocket.y + rocket.height / 2);
@@ -97,7 +132,6 @@ function drawRocket() {
   ctx.shadowBlur = 10;
   ctx.fill();
 
-  // Fire effect
   ctx.beginPath();
   ctx.moveTo(-6, 20);
   ctx.lineTo(0, 35);
@@ -110,15 +144,17 @@ function drawRocket() {
   ctx.restore();
 }
 
+// draw asteroid
 function drawAsteroid(a) {
   ctx.beginPath();
   ctx.arc(a.x, a.y, a.size, 0, Math.PI * 2);
-  ctx.fillStyle = "#777";
-  ctx.shadowColor = "#aaa";
+  ctx.fillStyle = "#666";
+  ctx.shadowColor = "#999";
   ctx.shadowBlur = 10;
   ctx.fill();
 }
 
+// new asteroid
 function newAsteroid() {
   return {
     x: Math.random() * (canvas.width - 20) + 10,
@@ -132,7 +168,12 @@ function update() {
   if (!gameRunning) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawStars();
+  // background stars
+  for (let i = 0; i < 50; i++) {
+    ctx.fillStyle = "rgba(255,255,255," + Math.random() * 0.4 + ")";
+    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1, 1);
+  }
+
   drawRocket();
 
   asteroids.forEach((a, i) => {
@@ -144,28 +185,36 @@ function update() {
       score++;
     }
 
-    // Collision check
     if (
       a.x > rocket.x &&
       a.x < rocket.x + rocket.width &&
       a.y > rocket.y &&
       a.y < rocket.y + rocket.height
     ) {
-      gameOver();
+      endGame();
     }
   });
 
-  if (Math.random() < 0.04) asteroids.push(newAsteroid());
-  document.getElementById("score").innerText = "Score: " + score;
+  if (Math.random() < 0.03) asteroids.push(newAsteroid());
+  scoreEl.textContent = "Score: " + score;
 }
 
-function gameOver() {
+function startGame() {
+  score = 0;
+  rocket.x = 185;
+  rocket.y = 450;
+  asteroids = [];
+  gameOverScreen.style.display = "none";
+  gameRunning = true;
+  clearInterval(interval);
+  interval = setInterval(update, 20);
+}
+
+function endGame() {
   gameRunning = false;
   clearInterval(interval);
-  ctx.fillStyle = "red";
-  ctx.font = "30px Orbitron";
-  ctx.textAlign = "center";
-  ctx.fillText("💥 GAME OVER 💥", canvas.width / 2, canvas.height / 2);
+  finalScoreEl.textContent = "Final Score: " + score;
+  gameOverScreen.style.display = "block";
 }
 
 document.addEventListener("keydown", (e) => {
@@ -173,15 +222,17 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" && rocket.x < canvas.width - rocket.width) rocket.x += 25;
 });
 
-document.getElementById("startBtn").addEventListener("click", () => {
-  asteroids = [];
-  score = 0;
-  rocket.x = 185;
-  rocket.y = 450;
-  gameRunning = true;
-  clearInterval(interval);
-  interval = setInterval(update, 20);
+restartBtn.addEventListener("click", startGame);
+
+document.getElementById("fullscreenBtn").addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
 });
+
+startGame();
 </script>
 </body>
 </html>
