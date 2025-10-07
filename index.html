@@ -11,7 +11,7 @@
     margin: 0;
     padding: 0;
     height: 100%;
-    background: radial-gradient(circle at top, #04071a 0%, #090a14 100%);
+    background: radial-gradient(circle at top, #030410 0%, #080a16 100%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -26,41 +26,50 @@
     align-items: center;
     border-radius: 15px;
     padding: 10px;
+    background: linear-gradient(145deg, #080b14, #101522);
     animation: ledGlow 5s linear infinite;
-    box-shadow: 0 0 30px 5px #0ff;
+    box-shadow: 0 0 35px 8px #00ffff66;
   }
 
   @keyframes ledGlow {
-    0% { box-shadow: 0 0 30px 5px #ff0000; }
-    25% { box-shadow: 0 0 30px 5px #00ff00; }
-    50% { box-shadow: 0 0 30px 5px #0000ff; }
-    75% { box-shadow: 0 0 30px 5px #ff00ff; }
-    100% { box-shadow: 0 0 30px 5px #ff0000; }
+    0% { box-shadow: 0 0 30px 8px #ff0000cc; }
+    25% { box-shadow: 0 0 30px 8px #00ff00cc; }
+    50% { box-shadow: 0 0 30px 8px #00aaffcc; }
+    75% { box-shadow: 0 0 30px 8px #ff00ffcc; }
+    100% { box-shadow: 0 0 30px 8px #ff0000cc; }
   }
 
   canvas {
-    background: #0b0b17;
-    border: 2px solid #fff;
+    background: repeating-linear-gradient(
+      0deg,
+      #0a0d18,
+      #0a0d18 4px,
+      #0b0f1d 4px,
+      #0b0f1d 8px
+    );
+    border: 2px solid #0ff;
     border-radius: 10px;
     display: block;
+    image-rendering: pixelated;
   }
 
   .ui-bar {
     width: 100%;
-    background: rgba(10, 10, 20, 0.9);
-    color: white;
+    background: rgba(10, 10, 25, 0.95);
+    color: #00ffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 8px 15px;
-    border-top: 2px solid white;
+    border-top: 2px solid #00ffff;
     font-size: 12px;
+    text-shadow: 0 0 6px #00ffff88;
   }
 
   .ui-bar button {
     background: none;
-    border: 1px solid white;
-    color: white;
+    border: 1px solid #00ffff;
+    color: #00ffff;
     padding: 5px 8px;
     cursor: pointer;
     font-family: inherit;
@@ -69,8 +78,12 @@
   }
 
   .ui-bar button:hover {
-    background: white;
+    background: #00ffff;
     color: black;
+  }
+
+  .ui-bar span {
+    text-shadow: 0 0 6px #00ffff;
   }
 </style>
 </head>
@@ -91,6 +104,7 @@
     const livesDisplay = document.getElementById("lives");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+    // Resize canvas with a margin
     function resizeCanvas() {
       const margin = 40;
       canvas.width = window.innerWidth - margin * 2;
@@ -99,7 +113,18 @@
     window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
-    let player = { x: canvas.width / 2, y: canvas.height - 60, size: 20, speed: 7 };
+    // Player setup (retro rocket sprite)
+    let player = { 
+      x: canvas.width / 2, 
+      y: canvas.height - 80, 
+      width: 30, 
+      height: 40, 
+      speed: 7 
+    };
+
+    const shipImg = new Image();
+    shipImg.src = "https://i.imgur.com/zX2M5Eu.png"; // small retro rocket sprite
+
     let keys = {};
     let asteroids = [];
     let score = 0;
@@ -111,9 +136,9 @@
 
     function spawnAsteroid() {
       asteroids.push({
-        x: Math.random() * canvas.width,
-        y: -20,
-        size: 20 + Math.random() * 30,
+        x: Math.random() * (canvas.width - 30),
+        y: -30,
+        size: 20 + Math.random() * 40,
         speed: 2 + Math.random() * 3
       });
     }
@@ -123,15 +148,22 @@
 
       if (keys["ArrowLeft"]) player.x -= player.speed;
       if (keys["ArrowRight"]) player.x += player.speed;
-      player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
 
       for (let a of asteroids) {
         a.y += a.speed;
-        if (a.y > canvas.height + 30) a.y = -30;
-        const dx = a.x - player.x;
-        const dy = a.y - player.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < a.size + player.size) {
+        if (a.y > canvas.height + 30) {
+          a.y = -30;
+          a.x = Math.random() * (canvas.width - 30);
+        }
+
+        // Collision
+        if (
+          a.x < player.x + player.width &&
+          a.x + a.size > player.x &&
+          a.y < player.y + player.height &&
+          a.y + a.size > player.y
+        ) {
           lives--;
           livesDisplay.textContent = "Lives: " + lives;
           a.y = -50;
@@ -145,19 +177,29 @@
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "white";
-      ctx.beginPath();
-      ctx.moveTo(player.x, player.y - player.size);
-      ctx.lineTo(player.x - player.size, player.y + player.size);
-      ctx.lineTo(player.x + player.size, player.y + player.size);
-      ctx.closePath();
-      ctx.fill();
 
-      ctx.fillStyle = "gray";
+      // Player (rocket image)
+      if (shipImg.complete) {
+        ctx.drawImage(shipImg, player.x, player.y, player.width, player.height);
+      } else {
+        // Fallback if image not loaded
+        ctx.fillStyle = "#0ff";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+      }
+
+      // Asteroids
+      ctx.fillStyle = "#888";
       for (let a of asteroids) {
         ctx.beginPath();
         ctx.arc(a.x, a.y, a.size, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      if (gameOver) {
+        ctx.fillStyle = "#ff0044";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
       }
     }
 
@@ -170,11 +212,20 @@
     setInterval(spawnAsteroid, 700);
     gameLoop();
 
+    // Fullscreen toggle
     fullscreenBtn.addEventListener("click", () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
+        fullscreenBtn.textContent = "⛶ Exit Fullscreen";
       } else {
         document.exitFullscreen();
+        fullscreenBtn.textContent = "⛶ Fullscreen";
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement) {
+        fullscreenBtn.textContent = "⛶ Fullscreen";
       }
     });
   </script>
