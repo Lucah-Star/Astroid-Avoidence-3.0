@@ -44,7 +44,6 @@ body {
   align-items: center;
   margin-top: 10px;
   padding: 0 10px;
-  position: relative;
 }
 
 #score-display, #lives-display {
@@ -130,8 +129,8 @@ body {
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
     <div id="ui-container">
-      <div id="score-display">Score: 0</div>
       <div id="lives-display">Lives: 3</div>
+      <div id="score-display">Score: 0</div>
       <button id="fullscreen-btn">⛶ Fullscreen</button>
     </div>
     <div id="start-screen" class="overlay-screen">
@@ -157,42 +156,61 @@ const fullscreenBtn = document.getElementById('fullscreen-btn');
 const scoreDisplay = document.getElementById('score-display');
 const livesDisplay = document.getElementById('lives-display');
 
-canvas.width = 1000;
-canvas.height = 700;
+function resizeCanvas() {
+  canvas.width = Math.min(window.innerWidth - 100, 1300);
+  canvas.height = Math.min(window.innerHeight - 200, 800);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 let gameRunning = false;
 let score = 0;
 let lives = 3;
-let player = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 30, speed: 6 };
+let player = { x: canvas.width / 2, y: canvas.height - 80, width: 20, height: 30, speed: 6 };
 let asteroids = [];
 let keys = {};
 
-function drawPlayer() {
-  ctx.fillStyle = '#4A90E2';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
+function drawRocket() {
+  ctx.fillStyle = "#4A90E2";
+  ctx.beginPath();
+  ctx.moveTo(player.x + player.width / 2, player.y);
+  ctx.lineTo(player.x, player.y + player.height);
+  ctx.lineTo(player.x + player.width, player.y + player.height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#ff0000";
+  ctx.fillRect(player.x + player.width/2 - 3, player.y + player.height, 6, 10);
 }
 
 function drawAsteroids() {
-  ctx.fillStyle = '#888';
-  asteroids.forEach(a => ctx.fillRect(a.x, a.y, a.size, a.size));
+  ctx.fillStyle = "#a0a0a0";
+  asteroids.forEach(a => {
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
 }
 
 function updateAsteroids() {
   asteroids.forEach(a => a.y += a.speed);
   asteroids = asteroids.filter(a => a.y < canvas.height + 50);
-  if (Math.random() < 0.04) {
+  if (Math.random() < 0.03) {
     asteroids.push({
-      x: Math.random() * (canvas.width - 20),
-      y: -20,
-      size: Math.random() * 20 + 20,
+      x: Math.random() * (canvas.width - 30) + 15,
+      y: -30,
+      size: Math.random() * 25 + 15,
       speed: Math.random() * 3 + 2
     });
   }
 }
 
-function drawUI() {
-  scoreDisplay.textContent = "Score: " + score;
-  livesDisplay.textContent = "Lives: " + lives;
+function checkCollision(a) {
+  return (
+    a.x + a.size / 2 > player.x &&
+    a.x - a.size / 2 < player.x + player.width &&
+    a.y + a.size / 2 > player.y &&
+    a.y - a.size / 2 < player.y + player.height
+  );
 }
 
 function updatePlayer() {
@@ -201,19 +219,33 @@ function updatePlayer() {
   player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
 }
 
+function drawUI() {
+  scoreDisplay.textContent = "Score: " + score;
+  livesDisplay.textContent = "Lives: " + lives;
+}
+
 function loop() {
   if (!gameRunning) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   updatePlayer();
   updateAsteroids();
-  drawPlayer();
+  drawRocket();
   drawAsteroids();
+
+  asteroids.forEach((a, i) => {
+    if (checkCollision(a)) {
+      asteroids.splice(i, 1);
+      lives--;
+      if (lives <= 0) endGame();
+    }
+  });
+
   drawUI();
   score++;
   requestAnimationFrame(loop);
 }
 
-startButton.addEventListener('click', () => {
+function startGame() {
   startScreen.style.display = 'none';
   gameOverScreen.style.display = 'none';
   gameRunning = true;
@@ -221,16 +253,17 @@ startButton.addEventListener('click', () => {
   lives = 3;
   asteroids = [];
   loop();
-});
+}
 
-restartButton.addEventListener('click', () => {
-  gameOverScreen.style.display = 'none';
-  gameRunning = true;
-  score = 0;
-  lives = 3;
-  asteroids = [];
-  loop();
-});
+function endGame() {
+  gameRunning = false;
+  finalScore.textContent = "Final Score: " + score;
+  gameOverScreen.style.opacity = "1";
+  gameOverScreen.style.visibility = "visible";
+}
+
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', startGame);
 
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
