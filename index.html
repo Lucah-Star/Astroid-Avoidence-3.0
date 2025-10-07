@@ -176,6 +176,154 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.width = Math.min(window.innerWidth - 60, 1200);
     canvas.height = Math.min(window.innerHeight - 140, 800);
   };
-  setCanvasSi
+  setCanvasSize();
+  window.addEventListener('resize', setCanvasSize);
 
-                          
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  class Player {
+    constructor() {
+      this.x = canvas.width / 2;
+      this.y = canvas.height - 30;
+      this.width = 30;
+      this.height = 40;
+      this.radius = 15;
+    }
+    draw() {
+      ctx.fillStyle = playerColor;
+      ctx.fillRect(this.x - 5, this.y - 10, 10, 20);
+      ctx.fillRect(this.x - 10, this.y, 5, 10);
+      ctx.fillRect(this.x + 5, this.y, 5, 10);
+      ctx.fillRect(this.x - 2, this.y - 20, 4, 10);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(this.x - 3, this.y - 15, 6, 6);
+      const exhaustWidth = 10;
+      const exhaustHeight = Math.random() * 10 + 5;
+      ctx.fillStyle = '#ff8c00';
+      ctx.fillRect(this.x - exhaustWidth / 2, this.y + 10, exhaustWidth, exhaustHeight);
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillRect(this.x - exhaustWidth / 4, this.y + 10 + exhaustHeight / 2, exhaustWidth / 2, exhaustHeight / 2);
+    }
+    update() {
+      if (keys['ArrowLeft'] || keys['a']) this.x -= playerSpeed;
+      if (keys['ArrowRight'] || keys['d']) this.x += playerSpeed;
+      if (this.x - this.radius < 0) this.x = this.radius;
+      if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+    }
+  }
+
+  class Asteroid {
+    constructor(x, y, radius, speedX, speedY) {
+      this.x = x || Math.random() * canvas.width;
+      this.y = y || -20;
+      this.radius = radius || (10 + Math.random() * 15);
+      this.speedX = speedX || (Math.random() - 0.5) * 1.5;
+      this.speedY = speedY || (1 + Math.random() * 2);
+      this.points = [];
+      this.craters = [];
+      const numPoints = 8 + Math.floor(Math.random() * 5);
+      const angleIncrement = (Math.PI * 2) / numPoints;
+      for (let i = 0; i < numPoints; i++) {
+        const angle = i * angleIncrement;
+        const r = this.radius * (0.8 + Math.random() * 0.4);
+        this.points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+      }
+      const numCraters = Math.floor(this.radius / 10) + 1;
+      for (let i = 0; i < numCraters; i++) {
+        const craterSize = this.radius * 0.2 + Math.random() * this.radius * 0.1;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * (this.radius - craterSize);
+        const craterX = Math.cos(angle) * distance;
+        const craterY = Math.sin(angle) * distance;
+        this.craters.push({ x: craterX, y: craterY, size: craterSize });
+      }
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.moveTo(this.x + this.points[0].x, this.y + this.points[0].y);
+      for (let i = 1; i < this.points.length; i++) {
+        ctx.lineTo(this.x + this.points[i].x, this.y + this.points[i].y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = asteroidColor;
+      ctx.fill();
+      const craterColor = '#555555';
+      for (const crater of this.craters) {
+        ctx.fillStyle = craterColor;
+        ctx.fillRect(this.x + crater.x, this.y + crater.y, crater.size, crater.size);
+      }
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+    }
+  }
+
+  function init() {
+    gameState = 'playing';
+    score = 0;
+    lives = 3;
+    player = new Player();
+    asteroids = [];
+    startScreen.style.opacity = '0';
+    startScreen.style.visibility = 'hidden';
+    gameOverScreen.style.opacity = '0';
+    gameOverScreen.style.visibility = 'hidden';
+    scoreDisplay.textContent = 'Score: 0';
+    livesDisplay.textContent = `Lives: ${lives}`;
+    requestAnimationFrame(gameLoop);
+  }
+
+  function gameLoop() {
+    if (gameState !== 'playing') return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    player.update();
+    player.draw();
+
+    if (Math.random() < 0.02) asteroids.push(new Asteroid());
+
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+      const a = asteroids[i];
+      a.update();
+      a.draw();
+
+      const dx = player.x - a.x;
+      const dy = player.y - a.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < player.radius + a.radius) {
+        lives--;
+        livesDisplay.textContent = `Lives: ${lives}`;
+        asteroids.splice(i, 1);
+        if (lives <= 0) return endGame();
+      }
+      if (a.y - a.radius > canvas.height) {
+        asteroids.splice(i, 1);
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+      }
+    }
+    requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    gameState = 'gameover';
+    finalScoreDisplay.textContent = `Final Score: ${score}`;
+    gameOverScreen.style.opacity = '1';
+    gameOverScreen.style.visibility = 'visible';
+  }
+
+  window.addEventListener('keydown', (e) => keys[e.key] = true);
+  window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+  startButton.addEventListener('click', init);
+  restartButton.addEventListener('click', init);
+});
+</script>
+</body>
+</html>
