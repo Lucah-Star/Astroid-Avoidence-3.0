@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pixel Asteroid Avoidance</title>
+<title>Asteroid Avoidance</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -31,25 +31,6 @@ body {
   padding: 20px;
 }
 
-#fullscreen-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 0.7em;
-  background-color: #4b4b6c;
-  border: 2px solid #fff;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 2px 2px #000;
-  transition: background 0.3s ease, transform 0.1s ease;
-}
-#fullscreen-btn:hover {
-  background-color: #5c5c8a;
-  transform: scale(1.05);
-}
-
 #gameCanvas {
   border: 4px solid #ffffff;
   background-color: #0d0d1e;
@@ -63,11 +44,28 @@ body {
   align-items: center;
   margin-top: 10px;
   padding: 0 10px;
+  position: relative;
 }
 
 #score-display, #lives-display {
   font-size: 1em;
   text-shadow: 2px 2px #000;
+}
+
+#fullscreen-btn {
+  font-size: 0.7em;
+  background-color: #4b4b6c;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 2px 2px #000;
+  transition: background 0.3s ease, transform 0.1s ease;
+}
+#fullscreen-btn:hover {
+  background-color: #5c5c8a;
+  transform: scale(1.05);
 }
 
 .overlay-screen {
@@ -130,15 +128,15 @@ body {
 </head>
 <body>
   <div id="game-container">
-    <button id="fullscreen-btn">⛶ Fullscreen</button>
+    <canvas id="gameCanvas"></canvas>
     <div id="ui-container">
       <div id="score-display">Score: 0</div>
       <div id="lives-display">Lives: 3</div>
+      <button id="fullscreen-btn">⛶ Fullscreen</button>
     </div>
-    <canvas id="gameCanvas"></canvas>
     <div id="start-screen" class="overlay-screen">
       <h1>Asteroid Avoidance</h1>
-      <p style="font-size: 1em;">Use the **Left** and **Right** arrow keys to move.</p>
+      <p style="font-size: 1em;">Use the <b>Left</b> and <b>Right</b> arrow keys to move.</p>
       <button class="action-button" id="startButton">Click to Play</button>
     </div>
     <div id="game-over-screen" class="overlay-screen">
@@ -149,180 +147,100 @@ body {
   </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const scoreDisplay = document.getElementById('score-display');
-  const livesDisplay = document.getElementById('lives-display');
-  const startScreen = document.getElementById('start-screen');
-  const gameOverScreen = document.getElementById('game-over-screen');
-  const finalScoreDisplay = document.getElementById('final-score');
-  const startButton = document.getElementById('startButton');
-  const restartButton = document.getElementById('restartButton');
-  const fullscreenBtn = document.getElementById('fullscreen-btn');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('start-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
+const startButton = document.getElementById('startButton');
+const restartButton = document.getElementById('restartButton');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+const scoreDisplay = document.getElementById('score-display');
+const livesDisplay = document.getElementById('lives-display');
 
-  let gameState = 'ready';
-  let score = 0;
-  let lives = 3;
-  let player, asteroids;
-  let keys = {};
+canvas.width = 1000;
+canvas.height = 700;
 
-  const playerColor = '#4A90E2';
-  const asteroidColor = '#888888';
-  const playerSpeed = 5;
-  const largeAsteroidRadiusThreshold = 10;
+let gameRunning = false;
+let score = 0;
+let lives = 3;
+let player = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 30, speed: 6 };
+let asteroids = [];
+let keys = {};
 
-  const setCanvasSize = () => {
-    canvas.width = Math.min(window.innerWidth - 60, 1200);
-    canvas.height = Math.min(window.innerHeight - 140, 800);
-  };
-  setCanvasSize();
-  window.addEventListener('resize', setCanvasSize);
+function drawPlayer() {
+  ctx.fillStyle = '#4A90E2';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
 
-  fullscreenBtn.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  });
+function drawAsteroids() {
+  ctx.fillStyle = '#888';
+  asteroids.forEach(a => ctx.fillRect(a.x, a.y, a.size, a.size));
+}
 
-  class Player {
-    constructor() {
-      this.x = canvas.width / 2;
-      this.y = canvas.height - 30;
-      this.width = 30;
-      this.height = 40;
-      this.radius = 15;
-    }
-    draw() {
-      ctx.fillStyle = playerColor;
-      ctx.fillRect(this.x - 5, this.y - 10, 10, 20);
-      ctx.fillRect(this.x - 10, this.y, 5, 10);
-      ctx.fillRect(this.x + 5, this.y, 5, 10);
-      ctx.fillRect(this.x - 2, this.y - 20, 4, 10);
-      ctx.fillStyle = '#C0C0C0';
-      ctx.fillRect(this.x - 3, this.y - 15, 6, 6);
-      const exhaustWidth = 10;
-      const exhaustHeight = Math.random() * 10 + 5;
-      ctx.fillStyle = '#ff8c00';
-      ctx.fillRect(this.x - exhaustWidth / 2, this.y + 10, exhaustWidth, exhaustHeight);
-      ctx.fillStyle = '#ffcc00';
-      ctx.fillRect(this.x - exhaustWidth / 4, this.y + 10 + exhaustHeight / 2, exhaustWidth / 2, exhaustHeight / 2);
-    }
-    update() {
-      if (keys['ArrowLeft'] || keys['a']) this.x -= playerSpeed;
-      if (keys['ArrowRight'] || keys['d']) this.x += playerSpeed;
-      if (this.x - this.radius < 0) this.x = this.radius;
-      if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
-    }
+function updateAsteroids() {
+  asteroids.forEach(a => a.y += a.speed);
+  asteroids = asteroids.filter(a => a.y < canvas.height + 50);
+  if (Math.random() < 0.04) {
+    asteroids.push({
+      x: Math.random() * (canvas.width - 20),
+      y: -20,
+      size: Math.random() * 20 + 20,
+      speed: Math.random() * 3 + 2
+    });
   }
+}
 
-  class Asteroid {
-    constructor(x, y, radius, speedX, speedY) {
-      this.x = x || Math.random() * canvas.width;
-      this.y = y || -20;
-      this.radius = radius || (10 + Math.random() * 15);
-      this.speedX = speedX || (Math.random() - 0.5) * 1.5;
-      this.speedY = speedY || (1 + Math.random() * 2);
-      this.points = [];
-      this.craters = [];
-      const numPoints = 8 + Math.floor(Math.random() * 5);
-      const angleIncrement = (Math.PI * 2) / numPoints;
-      for (let i = 0; i < numPoints; i++) {
-        const angle = i * angleIncrement;
-        const r = this.radius * (0.8 + Math.random() * 0.4);
-        this.points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
-      }
-      const numCraters = Math.floor(this.radius / 10) + 1;
-      for (let i = 0; i < numCraters; i++) {
-        const craterSize = this.radius * 0.2 + Math.random() * this.radius * 0.1;
-        const angle = Math.random() * Math.PI * 2;
-        const distance = Math.random() * (this.radius - craterSize);
-        const craterX = Math.cos(angle) * distance;
-        const craterY = Math.sin(angle) * distance;
-        this.craters.push({ x: craterX, y: craterY, size: craterSize });
-      }
-    }
-    draw() {
-      ctx.beginPath();
-      ctx.moveTo(this.x + this.points[0].x, this.y + this.points[0].y);
-      for (let i = 1; i < this.points.length; i++) {
-        ctx.lineTo(this.x + this.points[i].x, this.y + this.points[i].y);
-      }
-      ctx.closePath();
-      ctx.fillStyle = asteroidColor;
-      ctx.fill();
-      const craterColor = '#555555';
-      for (const crater of this.craters) {
-        ctx.fillStyle = craterColor;
-        ctx.fillRect(this.x + crater.x, this.y + crater.y, crater.size, crater.size);
-      }
-    }
-    update() {
-      this.x += this.speedX;
-      this.y += this.speedY;
-    }
+function drawUI() {
+  scoreDisplay.textContent = "Score: " + score;
+  livesDisplay.textContent = "Lives: " + lives;
+}
+
+function updatePlayer() {
+  if (keys['ArrowLeft']) player.x -= player.speed;
+  if (keys['ArrowRight']) player.x += player.speed;
+  player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+}
+
+function loop() {
+  if (!gameRunning) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlayer();
+  updateAsteroids();
+  drawPlayer();
+  drawAsteroids();
+  drawUI();
+  score++;
+  requestAnimationFrame(loop);
+}
+
+startButton.addEventListener('click', () => {
+  startScreen.style.display = 'none';
+  gameOverScreen.style.display = 'none';
+  gameRunning = true;
+  score = 0;
+  lives = 3;
+  asteroids = [];
+  loop();
+});
+
+restartButton.addEventListener('click', () => {
+  gameOverScreen.style.display = 'none';
+  gameRunning = true;
+  score = 0;
+  lives = 3;
+  asteroids = [];
+  loop();
+});
+
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+fullscreenBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
   }
-
-  function init() {
-    gameState = 'playing';
-    score = 0;
-    lives = 3;
-    player = new Player();
-    asteroids = [];
-    startScreen.style.opacity = '0';
-    startScreen.style.visibility = 'hidden';
-    gameOverScreen.style.opacity = '0';
-    gameOverScreen.style.visibility = 'hidden';
-    scoreDisplay.textContent = 'Score: 0';
-    livesDisplay.textContent = `Lives: ${lives}`;
-    requestAnimationFrame(gameLoop);
-  }
-
-  function gameLoop() {
-    if (gameState !== 'playing') return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    player.update();
-    player.draw();
-
-    if (Math.random() < 0.02) asteroids.push(new Asteroid());
-
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-      const a = asteroids[i];
-      a.update();
-      a.draw();
-
-      const dx = player.x - a.x;
-      const dy = player.y - a.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance < player.radius + a.radius) {
-        lives--;
-        livesDisplay.textContent = `Lives: ${lives}`;
-        asteroids.splice(i, 1);
-        if (lives <= 0) return endGame();
-      }
-      if (a.y - a.radius > canvas.height) {
-        asteroids.splice(i, 1);
-        score++;
-        scoreDisplay.textContent = `Score: ${score}`;
-      }
-    }
-    requestAnimationFrame(gameLoop);
-  }
-
-  function endGame() {
-    gameState = 'gameover';
-    finalScoreDisplay.textContent = `Final Score: ${score}`;
-    gameOverScreen.style.opacity = '1';
-    gameOverScreen.style.visibility = 'visible';
-  }
-
-  window.addEventListener('keydown', (e) => keys[e.key] = true);
-  window.addEventListener('keyup', (e) => keys[e.key] = false);
-
-  startButton.addEventListener('click', init);
-  restartButton.addEventListener('click', init);
 });
 </script>
 </body>
