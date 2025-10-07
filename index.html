@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pixel Asteroid Avoidance</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 body {
   background-color: #0d0d1e;
-  color: #fff;
+  color: #ffffff;
   font-family: 'Press Start 2P', cursive;
   display: flex;
   justify-content: center;
@@ -18,7 +18,17 @@ body {
   margin: 0;
   overflow: hidden;
   flex-direction: column;
-  padding: 20px; /* extra space around */
+}
+
+/* Rainbow neon border animation */
+@keyframes rainbowGlow {
+  0% { box-shadow: 0 0 10px red, 0 0 20px orange, 0 0 30px yellow, 0 0 40px lime, 0 0 50px cyan, 0 0 60px blue, 0 0 70px magenta; }
+  16% { box-shadow: 0 0 10px orange, 0 0 20px yellow, 0 0 30px lime, 0 0 40px cyan, 0 0 50px blue, 0 0 60px magenta, 0 0 70px red; }
+  33% { box-shadow: 0 0 10px yellow, 0 0 20px lime, 0 0 30px cyan, 0 0 40px blue, 0 0 50px magenta, 0 0 60px red, 0 0 70px orange; }
+  50% { box-shadow: 0 0 10px lime, 0 0 20px cyan, 0 0 30px blue, 0 0 40px magenta, 0 0 50px red, 0 0 60px orange, 0 0 70px yellow; }
+  66% { box-shadow: 0 0 10px cyan, 0 0 20px blue, 0 0 30px magenta, 0 0 40px red, 0 0 50px orange, 0 0 60px yellow, 0 0 70px lime; }
+  83% { box-shadow: 0 0 10px blue, 0 0 20px magenta, 0 0 30px red, 0 0 40px orange, 0 0 50px yellow, 0 0 60px lime, 0 0 70px cyan; }
+  100% { box-shadow: 0 0 10px magenta, 0 0 20px red, 0 0 30px orange, 0 0 40px yellow, 0 0 50px lime, 0 0 60px cyan, 0 0 70px blue; }
 }
 
 #game-container {
@@ -27,36 +37,16 @@ body {
   align-items: center;
   position: relative;
   background-color: #1a1a2e;
-  border-radius: 10px;
-  padding: 25px;
-  animation: neonCycle 3s linear infinite;
-  box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, 0 0 60px #00ff88;
-}
-
-@keyframes neonCycle {
-  0% {
-    box-shadow: 0 0 15px #ff00ff, 0 0 25px #00ffff, 0 0 40px #00ff88;
-  }
-  25% {
-    box-shadow: 0 0 15px #00ffff, 0 0 25px #00ff88, 0 0 40px #ffff00;
-  }
-  50% {
-    box-shadow: 0 0 15px #00ff88, 0 0 25px #ffff00, 0 0 40px #ff0088;
-  }
-  75% {
-    box-shadow: 0 0 15px #ffff00, 0 0 25px #ff0088, 0 0 40px #00ffff;
-  }
-  100% {
-    box-shadow: 0 0 15px #ff00ff, 0 0 25px #00ffff, 0 0 40px #00ff88;
-  }
+  border-radius: 12px;
+  animation: rainbowGlow 6s linear infinite;
+  padding: 20px;
+  margin: 40px;
 }
 
 #gameCanvas {
-  border: 4px solid #fff;
+  border: 4px solid #ffffff;
   background-color: #0d0d1e;
   image-rendering: pixelated;
-  display: block;
-  margin: 10px;
 }
 
 #ui-container {
@@ -68,34 +58,15 @@ body {
   padding: 0 10px;
 }
 
-#score-display,
-#lives-display {
+#score-display, #lives-display {
   font-size: 1em;
   text-shadow: 2px 2px #000;
 }
 
-#fullscreen-btn {
-  padding: 8px 14px;
-  font-size: 0.7em;
-  color: #fff;
-  background-color: #4b4b6c;
-  border: 2px solid #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 2px 2px #2a2a3e;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-}
-#fullscreen-btn:hover {
-  background-color: #5c5c8a;
-  transform: translateY(2px);
-}
-
 .overlay-screen {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
@@ -106,15 +77,8 @@ body {
   transition: opacity 0.5s ease;
 }
 
-#start-screen {
-  opacity: 1;
-  visibility: visible;
-}
-
-#game-over-screen {
-  opacity: 0;
-  visibility: hidden;
-}
+#start-screen { opacity: 1; visibility: visible; }
+#game-over-screen { opacity: 0; visibility: hidden; }
 
 .overlay-screen h1 {
   font-size: 2em;
@@ -125,7 +89,7 @@ body {
 
 #final-score {
   font-size: 1.5em;
-  color: #fff;
+  color: #ffffff;
   margin-bottom: 20px;
   text-shadow: 2px 2px #000;
 }
@@ -134,7 +98,7 @@ body {
   padding: 12px 24px;
   font-size: 0.8em;
   font-weight: bold;
-  color: #fff;
+  color: #ffffff;
   background-color: #4b4b6c;
   border: 2px solid #fff;
   border-radius: 4px;
@@ -146,223 +110,177 @@ body {
   background-color: #5c5c8a;
   transform: translate(2px, 2px);
 }
+.action-button:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
 </style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div id="ui-container">
-      <div id="lives-display">Lives: 3</div>
-      <div id="score-display">Score: 0</div>
-      <button id="fullscreen-btn">Fullscreen</button>
-    </div>
 
-    <div id="start-screen" class="overlay-screen">
-      <h1>Avoid the Asteroids!</h1>
-      <p style="font-size: 1em;">Use ← and → keys to move</p>
-      <button class="action-button" id="startButton">Click to Play</button>
-    </div>
+<div id="game-container">
+  <div id="ui-container">
+    <div id="score-display">Score: 0</div>
+    <div id="lives-display">Lives: 3</div>
+    <button id="fullscreen-btn" class="action-button">Fullscreen</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
 
-    <div id="game-over-screen" class="overlay-screen">
-      <h1>Game Over</h1>
-      <div id="final-score">Final Score: 0</div>
-      <button class="action-button" id="restartButton">Restart Game</button>
-    </div>
+  <div id="start-screen" class="overlay-screen">
+    <h1>Avoid the Asteroids!</h1>
+    <p style="font-size: 1em;">Use ← → keys or touch to move</p>
+    <button class="action-button" id="startButton">Click to Play</button>
   </div>
 
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const scoreDisplay = document.getElementById("score-display");
-    const livesDisplay = document.getElementById("lives-display");
-    const startScreen = document.getElementById("start-screen");
-    const gameOverScreen = document.getElementById("game-over-screen");
-    const finalScoreDisplay = document.getElementById("final-score");
-    const startButton = document.getElementById("startButton");
-    const restartButton = document.getElementById("restartButton");
-    const fullscreenBtn = document.getElementById("fullscreen-btn");
+  <div id="game-over-screen" class="overlay-screen">
+    <h1>Game Over</h1>
+    <div id="final-score">Final Score: 0</div>
+    <button class="action-button" id="restartButton">Restart</button>
+  </div>
+</div>
 
-    let gameState = "ready";
-    let score = 0;
-    let lives = 3;
-    let player, asteroids;
-    let keys = {};
-    const playerColor = "#4A90E2";
-    const asteroidColor = "#888888";
-    const playerSpeed = 5;
-    const largeAsteroidRadiusThreshold = 10;
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('score-display');
+  const livesDisplay = document.getElementById('lives-display');
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const finalScoreDisplay = document.getElementById('final-score');
+  const startButton = document.getElementById('startButton');
+  const restartButton = document.getElementById('restartButton');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
 
-    const setCanvasSize = () => {
-      canvas.width = Math.min(window.innerWidth - 60, 600);
-      canvas.height = Math.min(window.innerHeight - 200, 400);
-    };
-    setCanvasSize();
-    window.addEventListener("resize", setCanvasSize);
+  let gameState = 'ready';
+  let score = 0;
+  let lives = 3;
+  let player, asteroids;
+  let keys = {};
 
-    class Player {
-      constructor() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height - 30;
-        this.width = 30;
-        this.height = 40;
-        this.radius = 15;
-      }
-      draw() {
-        ctx.fillStyle = playerColor;
-        ctx.fillRect(this.x - 5, this.y - 10, 10, 20);
-        ctx.fillRect(this.x - 10, this.y, 5, 10);
-        ctx.fillRect(this.x + 5, this.y, 5, 10);
-        ctx.fillRect(this.x - 2, this.y - 20, 4, 10);
-        ctx.fillStyle = "#C0C0C0";
-        ctx.fillRect(this.x - 3, this.y - 15, 6, 6);
-        const exhaustWidth = 10;
-        const exhaustHeight = Math.random() * 10 + 5;
-        ctx.fillStyle = "#ff8c00";
-        ctx.fillRect(this.x - exhaustWidth / 2, this.y + 10, exhaustWidth, exhaustHeight);
-        ctx.fillStyle = "#ffcc00";
-        ctx.fillRect(this.x - exhaustWidth / 4, this.y + 10 + exhaustHeight / 2, exhaustWidth / 2, exhaustHeight / 2);
-      }
-      update() {
-        if (keys["ArrowLeft"] || keys["a"]) this.x -= playerSpeed;
-        if (keys["ArrowRight"] || keys["d"]) this.x += playerSpeed;
-        if (this.x - this.radius < 0) this.x = this.radius;
-        if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+  const playerSpeed = 5;
+  const playerColor = '#4A90E2';
+  const asteroidColor = '#888';
+
+  const setCanvasSize = () => {
+    canvas.width = Math.min(window.innerWidth - 80, 600);
+    canvas.height = Math.min(window.innerHeight - 200, 400);
+  };
+  setCanvasSize();
+  window.addEventListener('resize', setCanvasSize);
+
+  class Player {
+    constructor() {
+      this.x = canvas.width / 2;
+      this.y = canvas.height - 40;
+      this.radius = 15;
+    }
+    draw() {
+      // Retro rocket pixel style
+      ctx.fillStyle = playerColor;
+      ctx.fillRect(this.x - 5, this.y - 10, 10, 20);
+      ctx.fillRect(this.x - 10, this.y, 5, 10);
+      ctx.fillRect(this.x + 5, this.y, 5, 10);
+      ctx.fillRect(this.x - 2, this.y - 20, 4, 10);
+      ctx.fillStyle = '#C0C0C0';
+      ctx.fillRect(this.x - 3, this.y - 15, 6, 6);
+      // exhaust
+      const h = Math.random() * 10 + 5;
+      ctx.fillStyle = '#ff8c00';
+      ctx.fillRect(this.x - 5, this.y + 10, 10, h);
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillRect(this.x - 3, this.y + 10 + h / 2, 6, h / 2);
+    }
+    update() {
+      if (keys['ArrowLeft'] || keys['a']) this.x -= playerSpeed;
+      if (keys['ArrowRight'] || keys['d']) this.x += playerSpeed;
+      if (this.x - this.radius < 0) this.x = this.radius;
+      if (this.x + this.radius > canvas.width) this.x = canvas.width - this.radius;
+    }
+  }
+
+  class Asteroid {
+    constructor(x, y, r, sx, sy) {
+      this.x = x || Math.random() * canvas.width;
+      this.y = y || -20;
+      this.r = r || (10 + Math.random() * 15);
+      this.sx = sx || (Math.random() - 0.5);
+      this.sy = sy || (1 + Math.random() * 2);
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = asteroidColor;
+      ctx.fill();
+    }
+    update() {
+      this.x += this.sx;
+      this.y += this.sy;
+    }
+  }
+
+  function init() {
+    gameState = 'playing';
+    score = 0;
+    lives = 3;
+    player = new Player();
+    asteroids = [];
+    startScreen.style.opacity = '0';
+    startScreen.style.visibility = 'hidden';
+    gameOverScreen.style.opacity = '0';
+    gameOverScreen.style.visibility = 'hidden';
+    scoreDisplay.textContent = `Score: ${score}`;
+    livesDisplay.textContent = `Lives: ${lives}`;
+    requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    gameState = 'gameover';
+    finalScoreDisplay.textContent = `Final Score: ${score}`;
+    gameOverScreen.style.opacity = '1';
+    gameOverScreen.style.visibility = 'visible';
+  }
+
+  function gameLoop() {
+    if (gameState !== 'playing') return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    player.update(); player.draw();
+
+    if (Math.random() < 0.02) asteroids.push(new Asteroid());
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+      const a = asteroids[i];
+      a.update(); a.draw();
+      const dx = player.x - a.x, dy = player.y - a.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < player.radius + a.r) {
+        lives--;
+        livesDisplay.textContent = `Lives: ${lives}`;
+        asteroids.splice(i, 1);
+        if (lives <= 0) return endGame();
+      } else if (a.y - a.r > canvas.height) {
+        score++;
+        scoreDisplay.textContent = `Score: ${score}`;
+        asteroids.splice(i, 1);
       }
     }
+    requestAnimationFrame(gameLoop);
+  }
 
-    class Asteroid {
-      constructor(x, y, radius, speedX, speedY) {
-        this.x = x || Math.random() * canvas.width;
-        this.y = y || -20;
-        this.radius = radius || 10 + Math.random() * 15;
-        this.speedX = speedX || (Math.random() - 0.5) * 1.5;
-        this.speedY = speedY || (1 + Math.random() * 2);
-        this.points = [];
-        this.craters = [];
-        const numPoints = 8 + Math.floor(Math.random() * 5);
-        const angleIncrement = (Math.PI * 2) / numPoints;
-        for (let i = 0; i < numPoints; i++) {
-          const angle = i * angleIncrement;
-          const r = this.radius * (0.8 + Math.random() * 0.4);
-          this.points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
-        }
-        const numCraters = Math.floor(this.radius / 10) + 1;
-        for (let i = 0; i < numCraters; i++) {
-          const craterSize = this.radius * 0.2 + Math.random() * this.radius * 0.1;
-          const angle = Math.random() * Math.PI * 2;
-          const distance = Math.random() * (this.radius - craterSize);
-          const craterX = Math.cos(angle) * distance;
-          const craterY = Math.sin(angle) * distance;
-          this.craters.push({ x: craterX, y: craterY, size: craterSize });
-        }
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.moveTo(this.x + this.points[0].x, this.y + this.points[0].y);
-        for (let i = 1; i < this.points.length; i++) {
-          ctx.lineTo(this.x + this.points[i].x, this.y + this.points[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = asteroidColor;
-        ctx.fill();
-        ctx.fillStyle = "#555";
-        for (const crater of this.craters)
-          ctx.fillRect(this.x + crater.x, this.y + crater.y, crater.size, crater.size);
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-      }
-      shatter() {
-        if (this.radius > 8) {
-          const newAsteroids = [];
-          for (let i = 0; i < 3; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = this.speedY * (0.5 + Math.random() * 0.5);
-            const speedX = Math.cos(angle) * speed;
-            const speedY = Math.sin(angle) * speed;
-            newAsteroids.push(new Asteroid(this.x, this.y, this.radius / 2, speedX, speedY));
-          }
-          return newAsteroids;
-        }
-        return [];
-      }
+  window.addEventListener('keydown', e => keys[e.key] = true);
+  window.addEventListener('keyup', e => keys[e.key] = false);
+  startButton.addEventListener('click', init);
+  restartButton.addEventListener('click', init);
+
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      fullscreenBtn.textContent = "Exit Fullscreen";
+    } else {
+      document.exitFullscreen();
+      fullscreenBtn.textContent = "Fullscreen";
     }
-
-    function init() {
-      gameState = "playing";
-      score = 0;
-      lives = 3;
-      player = new Player();
-      asteroids = [];
-      startScreen.style.opacity = "0";
-      startScreen.style.visibility = "hidden";
-      gameOverScreen.style.opacity = "0";
-      gameOverScreen.style.visibility = "hidden";
-      scoreDisplay.textContent = "Score: 0";
-      livesDisplay.textContent = `Lives: ${lives}`;
-      requestAnimationFrame(gameLoop);
-    }
-
-    function gameLoop() {
-      if (gameState !== "playing") return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      player.update();
-      player.draw();
-      if (Math.random() < 0.02) asteroids.push(new Asteroid());
-      const newAsteroids = [];
-      for (let i = asteroids.length - 1; i >= 0; i--) {
-        let asteroid = asteroids[i];
-        asteroid.update();
-        asteroid.draw();
-        const dx = player.x - asteroid.x;
-        const dy = player.y - asteroid.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < player.radius + asteroid.radius) {
-          lives -= asteroid.radius > largeAsteroidRadiusThreshold ? 2 : 1;
-          livesDisplay.textContent = `Lives: ${lives}`;
-          asteroids.splice(i, 1);
-          if (lives <= 0) return endGame();
-          continue;
-        }
-        if (
-          asteroid.y - asteroid.radius > canvas.height ||
-          asteroid.x - asteroid.radius > canvas.width ||
-          asteroid.x + asteroid.radius < 0
-        ) {
-          asteroids.splice(i, 1);
-          score++;
-          scoreDisplay.textContent = `Score: ${score}`;
-        }
-      }
-      asteroids.push(...newAsteroids);
-      requestAnimationFrame(gameLoop);
-    }
-
-    function endGame() {
-      gameState = "gameover";
-      finalScoreDisplay.textContent = `Final Score: ${score}`;
-      gameOverScreen.style.opacity = "1";
-      gameOverScreen.style.visibility = "visible";
-    }
-
-    window.addEventListener("keydown", (e) => (keys[e.key] = true));
-    window.addEventListener("keyup", (e) => (keys[e.key] = false));
-    startButton.addEventListener("click", init);
-    restartButton.addEventListener("click", init);
-
-    // fullscreen toggle
-    fullscreenBtn.addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        fullscreenBtn.textContent = "Exit Fullscreen";
-      } else {
-        document.exitFullscreen();
-        fullscreenBtn.textContent = "Fullscreen";
-      }
-    });
   });
-  </script>
+});
+</script>
 </body>
 </html>
